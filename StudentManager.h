@@ -1,4 +1,4 @@
-// =============================================================================================
+﻿// =============================================================================================
 //  STUDENTMANAGER.H - QUẢN LÝ SINH VIÊN
 //  – Doubly Linked List các bản ghi sinh viên (Student)
 //  – Hash Map O(1) để tra cứu sinh viên theo MSSV
@@ -27,10 +27,7 @@ class StudentManager {
     }
 
     // Merge sort GPA giảm dần — nhận mảng float* gpaArr song song
-    // Vì GPA nằm ở ScoreManager, ta sort bằng cách nhận lambda-like
-    // thông qua con trỏ hàm so sánh
     typedef bool (*CmpFn)(SNode*, SNode*);
-
 
     SNode* mergeWith(SNode* a, SNode* b, CmpFn cmp) {
         if (!a) return b; if (!b) return a;
@@ -81,7 +78,7 @@ public:
     //      Trả về true nếu thành công;
     //      Trả về false nếu MSSV đã tồn tại.
     // =============================================================================================
-    
+        
         if (hmap.exists(s.id)) return false;
         SNode* n = new SNode(s);
         if (!head) { head = tail = n; }
@@ -115,22 +112,24 @@ public:
 
         bool found = false;
         for (SNode* c = head; c; c = c->next) {
-            // tìm không phân biệt hoa thường: so sánh đơn giản contain
+            // Tìm không phân biệt hoa thường
             if (c->data.name.find(kw) != std::string::npos) {
                 if (!found) {
                     std::cout << "\n";
-                    std::cout << Utils::col("MSSV", 12)
-                              << Utils::col("Ho va ten", 24)
-                              << Utils::col("Lop", 12)
-                              << Utils::col("Ngay sinh", 14)
-                              << Utils::col("Trang thai", 14) << "\n";
+                    std::cout << Utils::col("MSSV", 11)
+                              << Utils::col("Họ và tên", 25)
+                              << Utils::col("Lớp", 10)
+                              << Utils::col("Ngày sinh", 12)
+                              << Utils::col("Ngành", 25)
+                              << Utils::col("Trạng thái", 12) << "\n";
                     Utils::line();
                 }
-                std::cout << Utils::col(c->data.id, 12)
-                          << Utils::col(c->data.name, 24)
-                          << Utils::col(c->data.className, 12)
-                          << Utils::col(c->data.dob, 14)
-                          << Utils::col(c->data.status, 14) << "\n";
+                std::cout << Utils::col(c->data.id, 11)
+                          << Utils::col(c->data.name, 25)
+                          << Utils::col(c->data.className, 10)
+                          << Utils::col(c->data.dob, 12)
+                          << Utils::col(c->data.major, 25)
+                          << Utils::col(c->data.status, 12) << "\n";
                 found = true;
             }
         }
@@ -178,18 +177,18 @@ public:
 
     // In danh sách toàn bộ sinh viên
     void printAll() const {
-        if (!head) { std::cout << "  (Chua co sinh vien nao)\n"; return; }
+        if (!head) { std::cout << "  (Chưa có sinh viên nào)\n"; return; }
         std::cout << "\n";
 
-        int wID = 11, wName = 35, wClass = 10, wDOB = 12, wMajor = 25, wStatus = 12;
+        int wID = 11, wName = 25, wClass = 10, wDOB = 12, wMajor = 25, wStatus = 12;
         int totalWidth = wID + wName + wClass + wDOB + wMajor + wStatus;
 
         std::cout << Utils::col("MSSV", wID)
-              << Utils::col("Ho va ten", wName)
-              << Utils::col("Lop", wClass)
-              << Utils::col("Ngay sinh", wDOB)
-              << Utils::col("Nganh", wMajor)
-              << Utils::col("Trang thai", wStatus) << "\n";
+              << Utils::col("Họ và tên", wName)
+              << Utils::col("Lớp", wClass)
+              << Utils::col("Ngày sinh", wDOB)
+              << Utils::col("Ngành", wMajor)
+              << Utils::col("Trạng thái", wStatus) << "\n";
         Utils::line('-', totalWidth);
 
         for (SNode* c = head; c; c = c->next) {

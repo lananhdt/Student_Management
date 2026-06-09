@@ -1,4 +1,4 @@
-// =============================================================================================
+﻿// =============================================================================================
 //  SCOREMANAGER.H - QUẢN LÝ ĐIỂM SỐ & KẾT QUẢ HỌC TẬP
 //  – Doubly Linked List các bản ghi điểm (Score)
 //  – Tính GPA học kỳ (semester) và GPA tích lũy (cumulative)
@@ -151,7 +151,7 @@ public:
         return false;
     }
 
-    // Kiem tra xem co ban ghi diem nao cua mon hoc nay khong
+    // Kiểm tra xem bản ghi điểm đã tồn tại chưa
     bool hasScoreForSubject(const std::string& subCode) const {
         for (ScNode* c = head; c; c = c->next)
             if (c->data.subjectCode == subCode) return true;
@@ -174,19 +174,19 @@ public:
         SNode* sv = stm.findById(sid);
         if (!sv) { std::cout << "  [!] Khong tim thay sinh vien MSSV: " << sid << "\n"; return; }
 
-        Utils::title("BANG DIEM SINH VIEN");
-        std::cout << "  MSSV    : " << sv->data.id   << "\n"
-                  << "  Ho ten  : " << sv->data.name << "\n"
-                  << "  Lop     : " << sv->data.className << "\n"
-                  << "  Nganh   : " << sv->data.major << "\n";
+        Utils::title("BẢNG ĐIỂM SINH VIÊN");
+        std::cout << "  MSSV       : " << sv->data.id   << "\n"
+                  << "  Họ và tên  : " << sv->data.name << "\n"
+                  << "  Lớp        : " << sv->data.className << "\n"
+                  << "  Ngành      : " << sv->data.major << "\n";
         Utils::line();
 
-        std::cout << Utils::col("Ma mon", 10)
-                  << Utils::col("Ten mon hoc", 30)
-                  << Utils::col("TC", 5)
-                  << Utils::col("Diem 10", 9)
-                  << Utils::col("Diem 4", 8)
-                  << Utils::col("Chu", 6) << "\n";
+        std::cout << Utils::col("Mã học phần", 10)
+                  << Utils::col("Tên học phần", 30)
+                  << Utils::col("Số tín chỉ", 5)
+                  << Utils::col("Điểm học phần", 9)
+                  << Utils::col("Điểm hệ 4", 8)
+                  << Utils::col("", 6) << "\n";
         Utils::line();
 
         int   totalC = 0;

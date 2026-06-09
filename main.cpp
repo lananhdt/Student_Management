@@ -1,4 +1,4 @@
-// =============================================================================================
+﻿// =============================================================================================
 //  PROJECT  : HỆ THỐNG QUẢN LÝ SINH VIÊN & ĐIỂM SỐ
 //  Ngôn ngữ : C++
 //  Cấu trúc : Doubly Linked List, Hash Map, Merge Sort
@@ -9,8 +9,17 @@
 
 #include "Menu.h"
 #include "FileManager.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 int main() {
+    // Hiển thị Tiếng Việt trên Window
+    #ifdef _WIN32
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
+    #endif
+
     // Khởi tạo 3 manager trung tâm của hệ thống
     StudentManager stm;
     SubjectManager sbm;
