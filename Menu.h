@@ -7,6 +7,7 @@
 #pragma once
 #include "StudentManager.h"
 #include "SubjectManager.h"
+#include "ClassManager.h"
 #include "ScoreManager.h"
 #include "FileManager.h"
 #include "Utils.h"
@@ -17,6 +18,7 @@ class Menu {
     StudentManager& stm;
     SubjectManager& sbm;
     ScoreManager&   scm;
+    ClassManager&   cm;
 
     // Hiển thị giao diện menu chính lên console
     void showMain() const {
@@ -214,6 +216,10 @@ class Menu {
                       << "  [4] Xoá học phần\n"
                       << "  [5] Tìm kiếm theo mã học phần\n"
                       << "  [6] Tìm kiếm theo tên học phần\n"
+                      << "  -------- LỚP HỌC PHẦN --------\n"
+                      << "  [7] Thêm Lớp học phần mới\n"
+                      << "  [8] Thêm Sinh viên vào Lớp học phần\n"
+                      << "  [9] Xem danh sách Sinh viên trong Lớp\n"
                       << "  [0] Quay lại\n";
             Utils::line();
             int ch = Utils::inputInt("  > Chọn: ");
@@ -341,6 +347,47 @@ class Menu {
                     std::cout << "  [!] Không tìm thấy học phần nào có tên chứa: " << name << "\n";
             }
 
+            else if (ch == 7) {
+                Utils::title("    THÊM LỚP HỌC PHẦN MỚI");
+                ClassSession cs;
+
+                while (true) {
+                    cs.subjectCode = Utils::inputRequiredLine("  Nhập Mã học phần: ", "Mã học phần");
+                    if (!sbm.findByCode(cs.subjectCode))
+                        std::cout << "  [!] LỖI: Mã học phần chưa tồn tại trong hệ thống. Hãy thêm ở Menu [2] trước.\n";
+                    else break; 
+                }
+
+                while (true) {
+                    cs.classCode = Utils::inputRequiredLine("  Nhập Mã lớp học phần: ", "Mã lớp học phần");
+                    if (cm.findByClassCode(cs.classCode))
+                        std::cout << "  [!] LỖI: Lớp học phần này đã tồn tại. Vui lòng nhập mã khác.\n";
+                    else break;
+                }
+                
+                if (cm.addClass(cs)) {
+                    FileManager::saveClasses("classes.txt", "class_roster.txt", cm);
+                    std::cout << "  [OK] Đã tạo lớp học phần " << cs.classCode << " cho môn " << cs.subjectCode << " thành công.\n";                }
+            }
+
+            else if (ch == 8) {
+                Utils::title("    THÊM SINH VIÊN VÀO LỚP HỌC PHẦN");
+                std::string cCode = Utils::inputLine("  Nhập Mã lớp: ");
+                std::string sId = Utils::inputLine("  Nhập MSSV: ");
+                
+                if (cm.addStudentToClass(cCode, sId, stm)) {
+                    FileManager::saveClasses("classes.txt", "class_roster.txt", cm);
+                    std::cout << "  [OK] Đã thêm sinh viên " << sId << " vào lớp " << cCode << ".\n";
+                } else {
+                    std::cout << "  [!] LỖI: Không thể thêm (Sai mã lớp, sinh viên không tồn tại, hoặc đã có trong lớp).\n";
+                }
+            }
+
+            else if (ch == 9) {
+                std::string cCode = Utils::inputLine("  Nhập Mã lớp cần xem: ");
+                cm.printClassRoster(cCode, stm, sbm);
+            }
+
             else std::cout << "  [!] Lựa chọn không hợp lệ.\n";
             std::cout << "\n";
         }
@@ -363,13 +410,32 @@ class Menu {
 
             else if (ch == 1) {
                 Utils::title("     NHẬP / CẬP NHẬT ĐIỂM");
-                std::string sid = Utils::inputLine("  MSSV : ");
-                if (!stm.findById(sid)) {
-                    std::cout << "  [!] Không tìm thấy sinh viên.\n"; continue;
+                std::string classCode = Utils::inputLine("  Nhập Mã lớp học phần : ");
+                ClassNode* cn = cm.findByClassCode(classCode);
+                if (!cn) {
+                    std::cout << "  [!] Không tìm thấy lớp học phần.\n"; 
+                    continue;
                 }
-                std::string sub = Utils::inputLine("  Mã học phần     : ");
-                if (!sbm.findByCode(sub)) {
-                    std::cout << "  [!] Không tìm thấy học phần.\n"; continue;
+                std::string subCode = cn->data.subjectCode;
+                SubNode* subNode = sbm.findByCode(subCode);
+                std::string subName = subNode ? subNode->data.name : "  [!] Không tìm thấy học phần.";
+                std::cout << "  => Học phần: " << subCode << " - " << subName << "\n";
+
+                std::string sid = Utils::inputLine("  Nhập MSSV            : ");
+                
+                // Kiểm tra sinh viên có đăng ký Lớp học phần này không
+                bool isInClass = false;
+                for (RosterNode* r = cn->data.rosterHead; r; r = r->next) {
+                    if (r->studentId == sid) {
+                        isInClass = true;
+                        break;
+                    }
+                }
+
+                if (!isInClass) {
+                    std::cout << "  [!] Sinh viên " << sid << " không có trong danh sách Lớp học phần " << classCode << ".\n";
+                    std::cout << "  [!] Vui lòng thêm sinh viên vào lớp trước khi nhập điểm.\n";
+                    continue;
                 }
 
                 float a, b;
@@ -390,11 +456,11 @@ class Menu {
                 std::cout << "  => Điểm hệ 10: " << s10 << "\n";
                 float g4  = Utils::toGPA4(s10);
 
-                scm.addOrUpdate(sid, sub, s10, stm, sbm);
+                scm.addOrUpdate(sid, subCode, s10, stm, sbm);
                 FileManager::saveScores("scores.txt", scm);
                 std::cout << "  [OK] Đã lưu điểm: " << s10
                           << " (Hệ 4: " << Utils::f2(g4)
-                          << ", Chữ: " << Utils::toLetter(s10) << ")\n";
+                          << ", Hệ chữ: " << Utils::toLetter(s10) << ")\n";
             }
 
             else if (ch == 2) {
@@ -471,8 +537,8 @@ class Menu {
     }
 
 public:
-    Menu(StudentManager& s, SubjectManager& sub, ScoreManager& sc)
-        : stm(s), sbm(sub), scm(sc) {}
+    Menu(StudentManager& s, SubjectManager& sub, ScoreManager& sc, ClassManager& c)
+        : stm(s), sbm(sub), scm(sc), cm(c) {}
 
     // Vòng lặp chính của chương trình, hiển thị menu và điều hướng tác vụ – chạy đến khi người dùng chọn 0
     void run() {

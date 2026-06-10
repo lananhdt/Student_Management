@@ -9,6 +9,7 @@
 
 #include "Menu.h"
 #include "FileManager.h"
+#include "ClassManager.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -20,20 +21,21 @@ int main() {
     SetConsoleOutputCP(CP_UTF8);
     #endif
 
-    // Khởi tạo 3 manager trung tâm của hệ thống
+    // Khởi tạo các manager trung tâm của hệ thống
     StudentManager stm;
     SubjectManager sbm;
+    ClassManager   cm;
     ScoreManager   scm;
 
     // Tải toàn bộ dữ liệu từ các file text (.txt) vào bộ nhớ
-    FileManager::loadAll(stm, sbm, scm);
+    FileManager::loadAll(stm, sbm, cm, scm);
 
     // Khởi chạy vòng lặp menu điều khiển chính của console
-    Menu menu(stm, sbm, scm);
+    Menu menu(stm, sbm, scm, cm);
     menu.run();
 
     // Lưu lại toàn bộ dữ liệu từ bộ nhớ xuống file trước khi thoát
-    FileManager::saveAll(stm, sbm, scm);
+    FileManager::saveAll(stm, sbm, cm, scm);
 
     return 0;
 }

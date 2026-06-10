@@ -102,10 +102,7 @@ public:
 
         SubNode* n = hmap.get(code);
         if (!n) return false;
-        if (n->prev) n->prev->next = n->next; else head = n->next;
-        if (n->next) n->next->prev = n->prev; else tail = n->prev;
-        hmap.remove(code);
-        delete n; count--;
+        n->data.isActive = false;
         return true;
     }
 
@@ -138,10 +135,13 @@ public:
                   << Utils::col("Số tín chỉ", 12) << "\n";
         Utils::line();
 
+        int activeCount = 0;
         for (SubNode* c = head; c; c = c->next) {
+            if (!c->data.isActive) continue;
             std::cout << Utils::col(c->data.code, 12)
                       << Utils::col(c->data.name, 32)
                       << std::setw(6) << c->data.credits << "\n";
+            activeCount++;
         }
         Utils::line();
         std::cout << "  Tổng số: " << count << " học phần.\n";

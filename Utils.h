@@ -133,8 +133,8 @@ inline float inputFloat(const std::string& prompt, float lo, float hi) {
 
 // Kiểm tra điều kiện của MSSV
 inline bool isValidID(const std::string& id) {
-    // Kiểm tra độ dài có bằng 8 không
-    if (id.length() != 9) return false;
+    // Kiểm tra độ dài có lớn hơn 9 không
+    if (id.length() > 9) return false;
     // Kiểm tra xem tất cả các ký tự có phải là chữ số không
     for (char c : id) {
         if (!isdigit(c)) return false;
@@ -145,10 +145,9 @@ inline bool isValidID(const std::string& id) {
 // Kiểm tra điều kiện của Họ tên sinh viên
 inline bool isValidName(const std::string& name) {
     if (name.empty()) return false;
-    for (char c : name) {
-        if (isdigit(c) || (ispunct(c) && c != ' ')) return false;
-        if (isdigit(c)) return false; 
-    }
+    for (char c : name)
+        if (isdigit((unsigned char)c) || (ispunct((unsigned char)c) && c != ' ')) 
+            return false;
     return true;
 }
 

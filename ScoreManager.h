@@ -47,6 +47,10 @@ class ScoreManager {
         return mergeTmp(sortTmp(h), sortTmp(sec));
     }
 
+    struct Row { 
+        std::string id; std::string name; std::string cls; float gpa; int credits; 
+    };
+
     void calcGPA(const std::string& sid,
                  const SubjectManager& sm,
                  float& outGPA4,
@@ -76,6 +80,40 @@ class ScoreManager {
         outCredits = sumC;
     }
 
+    // Hàm trộn 2 nửa mảng theo GPA giảm dần
+    void mergeRows(Row* arr, int l, int m, int r) const {
+        int n1 = m - l + 1;
+        int n2 = r - m;
+        Row* L = new Row[n1];
+        Row* R = new Row[n2];
+        for (int i = 0; i < n1; i++) L[i] = arr[l + i];
+        for (int j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
+        
+        int i = 0, j = 0, k = l;
+        while (i < n1 && j < n2) {
+            if (L[i].gpa >= R[j].gpa) { // Sắp xếp giảm dần
+                arr[k] = L[i]; i++;
+            } else {
+                arr[k] = R[j]; j++;
+            }
+            k++;
+        }
+        while (i < n1) { arr[k] = L[i]; i++; k++; }
+        while (j < n2) { arr[k] = R[j]; j++; k++; }
+        delete[] L; 
+        delete[] R;
+    }
+
+    // Hàm đệ quy Merge Sort
+    void mergeSortRows(Row* arr, int l, int r) const {
+        if (l < r) {
+            int m = l + (r - l) / 2;
+            mergeSortRows(arr, l, m);
+            mergeSortRows(arr, m + 1, r);
+            mergeRows(arr, l, m, r);
+        }
+    }
+
 public:
     ScoreManager() : head(nullptr), tail(nullptr), count(0) {}
     ~ScoreManager() {
@@ -102,9 +140,16 @@ public:
     //      hoặc môn học trong cơ sở dữ liệu.
     // =============================================================================================
 
-        // Kiểm tra sinh viên và môn tồn tại
-        if (!stm.findById(sid))         return false;
-        if (!sbm.findByCode(subCode))   return false;
+        // Kiểm tra sinh viên có tồn tại không
+        SNode* studentNode = stm.findById(sid);
+        if (!studentNode) return false;
+        if (studentNode->data.status == "Đã nghỉ học") {
+            std::cout << "  [!] LỖI: Sinh viên này đã nghỉ học, không thể cập nhật điểm.\n";
+            return false;
+        }
+
+        // Kiểm tra học phần có tồn tại không
+        if (!sbm.findByCode(subCode)) return false;
 
         float g4  = Utils::toGPA4(s10);
         std::string ltr = Utils::toLetter(s10);
@@ -172,7 +217,7 @@ public:
     // =============================================================================================
 
         SNode* sv = stm.findById(sid);
-        if (!sv) { std::cout << "  [!] Khong tim thay sinh vien MSSV: " << sid << "\n"; return; }
+        if (!sv) { std::cout << "  [!] Không tìm thấy sinh viên MSSV: " << sid << "\n"; return; }
 
         Utils::title("BẢNG ĐIỂM SINH VIÊN");
         std::cout << "  MSSV       : " << sv->data.id   << "\n"
@@ -186,7 +231,7 @@ public:
                   << Utils::col("Số tín chỉ", 5)
                   << Utils::col("Điểm học phần", 9)
                   << Utils::col("Điểm hệ 4", 8)
-                  << Utils::col("", 6) << "\n";
+                  << Utils::col("Điểm chữ", 6) << "\n";
         Utils::line();
 
         int   totalC = 0;
@@ -209,13 +254,13 @@ public:
                       << Utils::col(c->data.letter, 6) << "\n";
         }
 
-        if (!found) { std::cout << "  (Chua co diem nao)\n"; Utils::line(); return; }
+        if (!found) { std::cout << "  (Chưa có điểm nào)\n"; Utils::line(); return; }
 
         Utils::line();
         float gpa = (totalC > 0) ? sumW / totalC : 0.0f;
-        std::cout << "  Tong tin chi tich luy : " << totalC << "\n"
-                  << "  GPA tich luy (he 4)   : " << std::fixed << std::setprecision(2) << gpa << "\n"
-                  << "  Xep loai hoc luc       : " << Utils::classify(gpa) << "\n";
+        std::cout << "  Tổng tín chỉ tích luỹ  : " << totalC << "\n"
+                  << "  GPA tích luỹ (hệ 4)    : " << std::fixed << std::setprecision(2) << gpa << "\n"
+                  << "  Xếp loại học lực       : " << Utils::classify(gpa) << "\n";
         Utils::line();
     }
 
@@ -234,20 +279,20 @@ public:
     // =============================================================================================
 
         SubNode* sub = sbm.findByCode(subCode);
-        if (!sub) { std::cout << "  [!] Khong tim thay mon hoc: " << subCode << "\n"; return; }
+        if (!sub) { std::cout << "  [!] Không tìm thấy học phần: " << subCode << "\n"; return; }
 
-        Utils::title("BANG DIEM LOP HOC PHAN");
-        std::cout << "  Ma mon  : " << sub->data.code    << "\n"
-                  << "  Ten mon : " << sub->data.name    << "\n"
-                  << "  Tin chi : " << sub->data.credits << "\n";
+        Utils::title("   BẢNG ĐIỂM HỌC PHẦN");
+        std::cout << "  Mã học phần  : " << sub->data.code    << "\n"
+                  << "  Tên học phần : " << sub->data.name    << "\n"
+                  << "  Số tín chỉ   : " << sub->data.credits << "\n";
         Utils::line();
 
         std::cout << Utils::col("MSSV", 13)
-                  << Utils::col("Ho va ten", 26)
-                  << Utils::col("Lop", 12)
-                  << Utils::col("Diem 10", 9)
-                  << Utils::col("Diem 4", 8)
-                  << Utils::col("Chu", 5) << "\n";
+                  << Utils::col("Họ và tên", 26)
+                  << Utils::col("Lớp", 12)
+                  << Utils::col("Điểm học phần", 9)
+                  << Utils::col("Điểm hệ 4", 8)
+                  << Utils::col("Điểm chữ", 5) << "\n";
         Utils::line();
 
         TmpNode* tHead = nullptr;
@@ -262,7 +307,7 @@ public:
             sum += c->data.score10; total++;
         }
 
-        if (total == 0) { std::cout << "  (Chua co sinh vien)\n"; return; }
+        if (total == 0) { std::cout << "  (Chưa có sinh viên nào)\n"; return; }
 
         // 2. Sắp xếp bằng Merge Sort (Thay thế hoàn toàn Insertion Sort cũ)
         tHead = sortTmp(tHead);
@@ -289,12 +334,12 @@ public:
         // Giải phóng tạm
         while (tHead) { TmpNode* t = tHead; tHead = t->next; delete t; }
 
-        if (total == 0) { std::cout << "  (Chua co sinh vien nao)\n"; Utils::line(); return; }
+        if (total == 0) { std::cout << "  (Chưa có sinh viên nào)\n"; Utils::line(); return; }
 
         Utils::line();
-        std::cout << "  So sinh vien : " << total << "\n"
-                  << "  Diem TB lop  : " << std::fixed << std::setprecision(2) << (sum / total) << "\n";
-        std::cout << "  Phan bo xep loai: "
+        std::cout << "  Số sinh viên    : " << total << "\n"
+                  << "  Điểm TB lớp     : " << std::fixed << std::setprecision(2) << (sum / total) << "\n";
+        std::cout << "  Phân bổ xếp loại: "
                   << "A=" << cntA << "  B=" << cntB << "  C=" << cntC
                   << "  D=" << cntD << "  F=" << cntF << "\n";
         Utils::line();
@@ -312,13 +357,10 @@ public:
     //      Không có giá trị trả về (void).
     // =============================================================================================
 
-        if (stm.getCount() == 0) { std::cout << "  (Chua co sinh vien)\n"; return; }
+        if (stm.getCount() == 0) { std::cout << "  (Chưa có sinh viên nào)\n"; return; }
 
         // Tạo mảng động
         int n = stm.getCount();
-        struct Row { std::string id; std::string name; std::string cls; float gpa; int credits; };
-
-        // Cấp phát mảng động
         Row* arr = new Row[n];
         int  idx = 0;
         for (SNode* c = stm.getHead(); c; c = c->next) {
@@ -332,25 +374,16 @@ public:
             idx++;
         }
 
-        // Merge sort mảng theo GPA giảm dần (dùng merge sort đệ quy)
-        // Dùng insertion sort cho mảng
-        for (int i = 1; i < n; i++) {
-            Row key = arr[i];
-            int j = i - 1;
-            while (j >= 0 && arr[j].gpa < key.gpa) {
-                arr[j + 1] = arr[j]; j--;
-            }
-            arr[j + 1] = key;
-        }
+        mergeSortRows(arr, 0, n - 1);
 
-        Utils::title("BANG XEP HANG SINH VIEN THEO GPA TICH LUY");
-        std::cout << Utils::col("TT", 5)
+        Utils::title("BẢNG XẾP HẠNG SINH VIÊN THEO GPA TÍCH LUỸ");
+        std::cout << Utils::col("STT", 5)
                   << Utils::col("MSSV", 13)
-                  << Utils::col("Ho va ten", 26)
-                  << Utils::col("Lop", 12)
-                  << Utils::col("TC", 5)
+                  << Utils::col("Họ và tên", 26)
+                  << Utils::col("Lớp", 12)
+                  << Utils::col("Số tín chỉ", 5)
                   << Utils::col("GPA", 7)
-                  << Utils::col("Xep loai", 12) << "\n";
+                  << Utils::col("Xếp loại", 12) << "\n";
         Utils::line();
         for (int i = 0; i < n; i++) {
             std::cout << std::setw(3) << (i + 1) << ".  "

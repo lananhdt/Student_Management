@@ -147,10 +147,7 @@ public:
 
         SNode* n = hmap.get(id);
         if (!n) return false;
-        if (n->prev) n->prev->next = n->next; else head = n->next;
-        if (n->next) n->next->prev = n->prev; else tail = n->prev;
-        hmap.remove(id);
-        delete n; count--;
+        n->data.status = "Đã nghỉ học";
         return true;
     }
 
@@ -191,16 +188,19 @@ public:
               << Utils::col("Trạng thái", wStatus) << "\n";
         Utils::line('-', totalWidth);
 
+        int activeCount = 0;
         for (SNode* c = head; c; c = c->next) {
+            if (c->data.status == "Đã nghỉ học") continue;
             std::cout << Utils::col(c->data.id, wID)
                       << Utils::col(c->data.name, wName)
                       << Utils::col(c->data.className, wClass)
                       << Utils::col(c->data.dob, wDOB)
                       << Utils::col(c->data.major, wMajor)
                       << Utils::col(c->data.status, wStatus) << "\n";
+            activeCount++;
         }
         Utils::line('-', totalWidth);
 
-        std::cout << "  Tong so: " << count << " sinh vien.\n";
+        std::cout << "  Tổng số: " << count << " sinh viên.\n";
     }
 };
